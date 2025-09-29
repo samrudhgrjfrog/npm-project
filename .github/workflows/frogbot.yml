@@ -1,0 +1,63 @@
+# .github/workflows/frogbot.yml
+
+name: "Frogbot Security Scan (User/Pass Auth)"
+
+on:
+  # 1. PULL REQUEST SCAN: Triggers on new/updated PRs to check for new vulnerabilities
+  pull_request_target:
+    types: [opened, synchronize] 
+
+  # 2. REPOSITORY SCAN: Triggers on push to the main branch (e.g., merge)
+  push:
+    branches:
+      - main
+  
+  # 3. SCHEDULED REPOSITORY SCAN: Triggers periodically to find and autofix existing issues
+  schedule:
+    - cron: "0 0 * * *" # Runs every day at midnight UTC (adjust as needed)
+
+  # 4. MANUAL TRIGGER
+  workflow_dispatch:
+
+permissions:
+  # Required for Frogbot to checkout code and create Autofix PRs
+  contents: write           
+  # Required for Frogbot to comment on PRs and create Autofix PRs
+  pull-requests: write      
+  # Recommended for uploading results to GitHub Security tab
+  security-events: write    
+  # Required if using OIDC for JFrog auth (but not strictly needed for User/Pass)
+  id-token: write           
+
+jobs:
+  frogbot-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      # Must use v4 or later for proper permissions handling
+      uses: actions/checkout@v4 
+      with:
+        # Checkout the PR head for Pull Request scans, or the commit SHA for Push/Scheduled scans
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        # The JF_GIT_TOKEN is a GitHub PAT used for Git operations (Autofix PR creation)
+        token: ${{ secrets.JF_GIT_TOKEN }}
+        fetch-depth: 0 # Fetch all history for accurate scan
+
+    - name: Run Frogbot Scan
+      # Use the official Frogbot GitHub Action
+      uses: jfrog/frogbot@v2 
+      with:
+        # 🔑 MANDATORY JFROG AUTHENTICATION (USING USERNAME/PASSWORD)
+        JF_URL: ${{ secrets.JF_URL }}
+        JF_USER: ${{ secrets.JF_USER }}
+        JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+        
+        # 🔑 MANDATORY GITHUB TOKEN (For Pull Request and Autofix operations)
+        JF_GIT_TOKEN: ${{ secrets.JF_GIT_TOKEN }}
+
+        # Optional: Specify the JFrog Project Key if applicable
+        # JF_PROJECT_KEY: 'my-jfrog-project'
+
+        # Optional: Specify a custom config file path
+        # CONFIG_FILE_PATH: '.frogbot/frogbot-config.yml'

@@ -14,7 +14,7 @@ This example demonstrates how to build a npm project using JFrog CLI. The build 
 
 1. Downloads its npm dependencies from Artifactory.
 2. Packs and uploads the built package to Artifactory.
-3. Records and publishes build-info to Artifactory..
+3. Records and publishes build-info to Artifactory.
 
 # Prerequisite
 

@@ -15,6 +15,12 @@ steps:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
+
+- task: JfrogCliV2@1
+  inputs:
+    jfrogPlatformConnection: 'samadaptioninstance'
+    command: 'jf c s'
+
 - script: |
     npm install
     npm run build
